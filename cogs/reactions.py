@@ -22,6 +22,7 @@ EMOJI_TRIGGERS: dict[str, str] = {
     "gg":         "🎉",
     "love":       "❤️",
     "haha":       "😂",
+    "bite":       "🍆",
 }
 
 
