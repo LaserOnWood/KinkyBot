@@ -80,7 +80,7 @@ async def sync(ctx):
 @bot.tree.command(name="bal", description="Consulter ton solde")
 async def balance(interaction: discord.Interaction):
     wallet, bank, _ = get_data(interaction.user.id)
-    embed = discord.Embed(title=f"🏦 Banquise de {interaction.user.name}", color=0x3498db)
+    embed = discord.Embed(title=f"🏦 Compte en banque de {interaction.user.name}", color=0x3498db)
     embed.add_field(name="Portefeuille", value=f"**{wallet}** 🪙", inline=True)
     embed.add_field(name="Banque", value=f"**{bank}** 🏦", inline=True)
     await interaction.response.send_message(embed=embed)
