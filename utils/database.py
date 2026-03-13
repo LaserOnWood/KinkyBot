@@ -1,0 +1,68 @@
+import sqlite3
+
+DB_PATH = "economy.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS economy (
+        user_id INTEGER PRIMARY KEY,
+        wallet  INTEGER DEFAULT 100,
+        bank    INTEGER DEFAULT 0,
+        last_daily TEXT DEFAULT 'Jamais'
+    )
+    """)
+    conn.commit()
+    conn.close()
+    print("✅ Base de données SQLite connectée.")
+
+def get_data(user_id: int) -> tuple:
+    """Retourne (wallet, bank, last_daily). Crée le joueur s'il n'existe pas."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT wallet, bank, last_daily FROM economy WHERE user_id = ?", (user_id,))
+    res = cursor.fetchone()
+    if res is None:
+        cursor.execute("INSERT INTO economy (user_id) VALUES (?)", (user_id,))
+        conn.commit()
+        res = (100, 0, "Jamais")
+    conn.close()
+    return res
+
+def update_db(user_id: int, wallet_diff: int = 0, bank_diff: int = 0, new_daily: str = None):
+    """Met à jour le portefeuille / la banque / la date daily."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    if new_daily:
+        cursor.execute(
+            "UPDATE economy SET wallet = wallet + ?, bank = bank + ?, last_daily = ? WHERE user_id = ?",
+            (wallet_diff, bank_diff, new_daily, user_id),
+        )
+    else:
+        cursor.execute(
+            "UPDATE economy SET wallet = wallet + ?, bank = bank + ? WHERE user_id = ?",
+            (wallet_diff, bank_diff, user_id),
+        )
+    conn.commit()
+    conn.close()
+
+def set_wallet(user_id: int, amount: int):
+    """Définit directement le montant du portefeuille."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE economy SET wallet = ? WHERE user_id = ?", (amount, user_id))
+    conn.commit()
+    conn.close()
+
+def get_leaderboard(limit: int = 10) -> list:
+    """Retourne les `limit` joueurs les plus riches (wallet + bank)."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT user_id, wallet + bank AS total FROM economy ORDER BY total DESC LIMIT ?",
+        (limit,),
+    )
+    res = cursor.fetchall()
+    conn.close()
+    return res
