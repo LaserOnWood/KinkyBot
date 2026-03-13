@@ -19,7 +19,7 @@ class Economy(commands.Cog):
     async def balance(self, interaction: discord.Interaction):
         wallet, bank, _ = get_data(interaction.user.id)
         embed = discord.Embed(
-            title=f"🏦 Compte de {interaction.user.name}",
+            title=f"🏦 Compte de {interaction.user.display_name}",
             color=0x3498DB,
         )
         embed.add_field(name="Portefeuille", value=f"**{wallet}** 🪙", inline=True)
@@ -34,11 +34,21 @@ class Economy(commands.Cog):
         today = str(date.today())
 
         if last_daily == today:
-            return await interaction.response.send_message("⏳ Reviens demain !", ephemeral=True)
+            embed = discord.Embed(
+                title="⏳ Patience",
+                description=f"**{interaction.user.display_name}**, reviens demain !",
+                color=0xE67E22
+            )
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
 
         reward = 500
         update_db(user_id, wallet_diff=reward, new_daily=today)
-        await interaction.response.send_message(f"🎁 **{reward} 🪙** ajoutés à ton portefeuille !")
+        embed = discord.Embed(
+            title="🎁 Bonus Quotidien",
+            description=f"**{interaction.user.display_name}**, tu as reçu **{reward} 🪙** !",
+            color=0x2ECC71
+        )
+        await interaction.response.send_message(embed=embed)
 
     # /travail
     @app_commands.command(name="travail", description="Travailler pour gagner de l'argent")
@@ -46,9 +56,12 @@ class Economy(commands.Cog):
         gain = random.randint(70, 200)
         update_db(interaction.user.id, wallet_diff=gain)
         jobs = ["Mineur de Bitcoin", "Livreur Uber", "Modérateur Discord", "Mercenaire", "Streamer Twitch"]
-        await interaction.response.send_message(
-            f"💼 Job : **{random.choice(jobs)}** | Gain : **{gain} 🪙**"
+        embed = discord.Embed(
+            title="💼 Travail terminé",
+            description=f"**{interaction.user.display_name}**, tu as travaillé comme **{random.choice(jobs)}** et gagné **{gain} 🪙** !",
+            color=0x3498DB
         )
+        await interaction.response.send_message(embed=embed)
 
     # /depot
     @app_commands.command(name="depot", description="Déposer de l'argent en banque")
@@ -57,12 +70,23 @@ class Economy(commands.Cog):
         user_id = interaction.user.id
         wallet, _, _ = get_data(user_id)
 
-        amt = wallet if montant.lower() == "all" else int(montant)
+        try:
+            amt = wallet if montant.lower() == "all" else int(montant)
+        except ValueError:
+            embed = discord.Embed(title="❌ Erreur", description="Montant invalide.", color=0xE74C3C)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
+
         if amt <= 0 or amt > wallet:
-            return await interaction.response.send_message("❌ Montant invalide.", ephemeral=True)
+            embed = discord.Embed(title="❌ Erreur", description="Montant invalide ou insuffisant.", color=0xE74C3C)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
 
         update_db(user_id, wallet_diff=-amt, bank_diff=amt)
-        await interaction.response.send_message(f"✅ **{amt} 🪙** déposés en banque.")
+        embed = discord.Embed(
+            title="✅ Dépôt réussi",
+            description=f"**{interaction.user.display_name}**, tu as déposé **{amt} 🪙** en banque.",
+            color=0x2ECC71
+        )
+        await interaction.response.send_message(embed=embed)
 
     # /retrait
     @app_commands.command(name="retrait", description="Retirer de l'argent de la banque")
@@ -71,25 +95,38 @@ class Economy(commands.Cog):
         user_id = interaction.user.id
         _, bank, _ = get_data(user_id)
 
-        amt = bank if montant.lower() == "all" else int(montant)
+        try:
+            amt = bank if montant.lower() == "all" else int(montant)
+        except ValueError:
+            embed = discord.Embed(title="❌ Erreur", description="Montant invalide.", color=0xE74C3C)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
+
         if amt <= 0 or amt > bank:
-            return await interaction.response.send_message("❌ Montant invalide.", ephemeral=True)
+            embed = discord.Embed(title="❌ Erreur", description="Montant invalide ou insuffisant en banque.", color=0xE74C3C)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
 
         update_db(user_id, wallet_diff=amt, bank_diff=-amt)
-        await interaction.response.send_message(f"✅ **{amt} 🪙** retirés.")
+        embed = discord.Embed(
+            title="✅ Retrait réussi",
+            description=f"**{interaction.user.display_name}**, tu as retiré **{amt} 🪙** de ta banque.",
+            color=0x2ECC71
+        )
+        await interaction.response.send_message(embed=embed)
 
     # /classement
     @app_commands.command(name="classement", description="Classement des joueurs les plus riches")
     async def leaderboard(self, interaction: discord.Interaction):
         rows = get_leaderboard(10)
         if not rows:
-            return await interaction.response.send_message("Aucun joueur pour l'instant.")
+            embed = discord.Embed(title="🏆 Classement", description="Aucun joueur pour l'instant.", color=0xF1C40F)
+            return await interaction.response.send_message(embed=embed)
 
         embed = discord.Embed(title="🏆 Classement", color=0xF1C40F)
         lines = []
         for i, (user_id, total) in enumerate(rows, start=1):
-            user = self.bot.get_user(user_id) or f"ID:{user_id}"
-            lines.append(f"**{i}.** {user} — {total} 🪙")
+            user = self.bot.get_user(user_id)
+            user_name = user.display_name if isinstance(user, discord.User) or isinstance(user, discord.Member) else f"ID:{user_id}"
+            lines.append(f"**{i}.** {user_name} — {total} 🪙")
         embed.description = "\n".join(lines)
         await interaction.response.send_message(embed=embed)
 

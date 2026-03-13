@@ -40,10 +40,16 @@ class Reactions(commands.Cog):
 
         content_lower = message.content.lower()
 
-        # --- Réponse texte ---
+        # --- Réponse texte via Embed ---
         for trigger, responses in TRIGGERS.items():
             if trigger in content_lower:
-                await message.channel.send(random.choice(responses))
+                embed = discord.Embed(
+                    description=random.choice(responses),
+                    color=0x3498DB
+                )
+                # Optionnel: On peut ajouter le nom de l'utilisateur dans l'embed
+                embed.set_footer(text=f"Réponse pour {message.author.display_name}")
+                await message.channel.send(embed=embed)
                 break  # une seule réponse par message
 
         # --- Ajout d'emoji ---

@@ -37,25 +37,24 @@ class Moderation(commands.Cog):
         for word in BANNED_WORDS:
             if word in content_lower:
                 await message.delete()
-                await message.channel.send(
-                    f"⚠️ {message.author.mention}, ce message enfreint les règles.", delete_after=5
+                embed = discord.Embed(
+                    title="⚠️ Avertissement",
+                    description=f"**{message.author.display_name}**, ce message enfreint les règles.",
+                    color=0xE74C3C
                 )
+                await message.channel.send(embed=embed, delete_after=5)
                 return
 
         # Anti-mention spam
         if len(message.mentions) >= MAX_MENTIONS:
             await message.delete()
-            await message.channel.send(
-                f"⚠️ {message.author.mention}, trop de mentions d'un coup !", delete_after=5
+            embed = discord.Embed(
+                title="⚠️ Avertissement",
+                description=f"**{message.author.display_name}**, trop de mentions d'un coup !",
+                color=0xE74C3C
             )
+            await message.channel.send(embed=embed, delete_after=5)
             return
-
-        # Anti-lien (optionnel — décommenter pour activer)
-        # URL_REGEX = re.compile(r"https?://\S+")
-        # if URL_REGEX.search(message.content):
-        #     await message.delete()
-        #     await message.channel.send(f"⚠️ {message.author.mention}, les liens sont interdits ici.", delete_after=5)
-        #     return
 
     # ------------------------------------------------------------------ #
     #  COMMANDES MANUELLES
@@ -68,7 +67,7 @@ class Moderation(commands.Cog):
         await membre.kick(reason=raison)
         embed = discord.Embed(
             title="👢 Expulsion",
-            description=f"**{membre}** a été expulsé.\n📝 Raison : {raison}",
+            description=f"**{membre.display_name}** a été expulsé.\n📝 Raison : {raison}",
             color=0xE67E22,
         )
         await interaction.response.send_message(embed=embed)
@@ -80,7 +79,7 @@ class Moderation(commands.Cog):
         await membre.ban(reason=raison)
         embed = discord.Embed(
             title="🔨 Bannissement",
-            description=f"**{membre}** a été banni.\n📝 Raison : {raison}",
+            description=f"**{membre.display_name}** a été banni.\n📝 Raison : {raison}",
             color=0xE74C3C,
         )
         await interaction.response.send_message(embed=embed)
@@ -92,30 +91,48 @@ class Moderation(commands.Cog):
         try:
             user = await self.bot.fetch_user(int(user_id))
             await interaction.guild.unban(user)
-            await interaction.response.send_message(f"✅ **{user}** a été débanni.")
+            embed = discord.Embed(
+                title="✅ Débannissement",
+                description=f"**{user.display_name}** a été débanni.",
+                color=0x2ECC71
+            )
+            await interaction.response.send_message(embed=embed)
         except discord.NotFound:
-            await interaction.response.send_message("❌ Utilisateur introuvable ou pas banni.", ephemeral=True)
+            embed = discord.Embed(title="❌ Erreur", description="Utilisateur introuvable ou pas banni.", color=0xE74C3C)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        except ValueError:
+            embed = discord.Embed(title="❌ Erreur", description="ID invalide.", color=0xE74C3C)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="muet", description="Rendre muet un membre (timeout)")
     @app_commands.describe(membre="Membre à mute", minutes="Durée en minutes")
     @app_commands.checks.has_permissions(moderate_members=True)
     async def mute(self, interaction: discord.Interaction, membre: discord.Member, minutes: int = 10):
-        from datetime import timedelta, timezone, datetime
+        from datetime import timedelta
         until = discord.utils.utcnow() + timedelta(minutes=minutes)
-        await membre.timeout(until, reason=f"Mute par {interaction.user}")
-        await interaction.response.send_message(
-            f"🔇 **{membre}** est muet pour **{minutes} minute(s)**."
+        await membre.timeout(until, reason=f"Mute par {interaction.user.display_name}")
+        embed = discord.Embed(
+            title="🔇 Mute",
+            description=f"**{membre.display_name}** est muet pour **{minutes} minute(s)**.",
+            color=0x95A5A6
         )
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="nettoyer", description="Supprimer des messages en masse")
     @app_commands.describe(nombre="Nombre de messages à supprimer (max 100)")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def clear(self, interaction: discord.Interaction, nombre: int):
         if nombre < 1 or nombre > 100:
-            return await interaction.response.send_message("❌ Entre 1 et 100 messages.", ephemeral=True)
+            embed = discord.Embed(title="❌ Erreur", description="Entre 1 et 100 messages.", color=0xE74C3C)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
         await interaction.response.defer(ephemeral=True)
         deleted = await interaction.channel.purge(limit=nombre)
-        await interaction.followup.send(f"🗑️ **{len(deleted)}** messages supprimés.", ephemeral=True)
+        embed = discord.Embed(
+            title="🗑️ Nettoyage",
+            description=f"**{len(deleted)}** messages supprimés.",
+            color=0x3498DB
+        )
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     # ------------------------------------------------------------------ #
     #  GESTION DES ERREURS DE PERMISSIONS
@@ -128,9 +145,11 @@ class Moderation(commands.Cog):
     @clear.error
     async def permission_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.MissingPermissions):
-            await interaction.response.send_message("❌ Tu n'as pas les permissions nécessaires.", ephemeral=True)
+            embed = discord.Embed(title="❌ Erreur", description="Tu n'as pas les permissions nécessaires.", color=0xE74C3C)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
-            await interaction.response.send_message(f"❌ Erreur : {error}", ephemeral=True)
+            embed = discord.Embed(title="❌ Erreur", description=f"Erreur : {error}", color=0xE74C3C)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 async def setup(bot: commands.Bot):
