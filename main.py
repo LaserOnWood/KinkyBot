@@ -24,6 +24,7 @@ class KinkyBot(commands.Bot):
     async def setup_hook(self):
         """Initialisation des modules (Cogs) avant la connexion."""
         modules = [
+            "cogs.general",
             "cogs.economy",
             "cogs.casino",
             "cogs.reactions",
