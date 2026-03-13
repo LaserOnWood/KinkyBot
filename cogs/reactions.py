@@ -60,9 +60,6 @@ class Reactions(commands.Cog):
                 except discord.HTTPException:
                     pass
 
-        # Laisser les autres commandes se traiter normalement
-        await self.bot.process_commands(message)
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Reactions(bot))
