@@ -61,31 +61,31 @@ class Moderation(commands.Cog):
     #  COMMANDES MANUELLES
     # ------------------------------------------------------------------ #
 
-    @app_commands.command(name="kick", description="Expulser un membre")
+    @app_commands.command(name="expulser", description="Expulser un membre")
     @app_commands.describe(membre="Membre à expulser", raison="Raison (optionnel)")
     @app_commands.checks.has_permissions(kick_members=True)
     async def kick(self, interaction: discord.Interaction, membre: discord.Member, raison: str = "Aucune raison"):
         await membre.kick(reason=raison)
         embed = discord.Embed(
-            title="👢 Kick",
+            title="👢 Expulsion",
             description=f"**{membre}** a été expulsé.\n📝 Raison : {raison}",
             color=0xE67E22,
         )
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="ban", description="Bannir un membre")
+    @app_commands.command(name="bannir", description="Bannir un membre")
     @app_commands.describe(membre="Membre à bannir", raison="Raison (optionnel)")
     @app_commands.checks.has_permissions(ban_members=True)
     async def ban(self, interaction: discord.Interaction, membre: discord.Member, raison: str = "Aucune raison"):
         await membre.ban(reason=raison)
         embed = discord.Embed(
-            title="🔨 Ban",
+            title="🔨 Bannissement",
             description=f"**{membre}** a été banni.\n📝 Raison : {raison}",
             color=0xE74C3C,
         )
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="unban", description="Débannir un utilisateur")
+    @app_commands.command(name="debannir", description="Débannir un utilisateur")
     @app_commands.describe(user_id="L'ID Discord de l'utilisateur")
     @app_commands.checks.has_permissions(ban_members=True)
     async def unban(self, interaction: discord.Interaction, user_id: str):
@@ -96,7 +96,7 @@ class Moderation(commands.Cog):
         except discord.NotFound:
             await interaction.response.send_message("❌ Utilisateur introuvable ou pas banni.", ephemeral=True)
 
-    @app_commands.command(name="mute", description="Rendre muet un membre (timeout)")
+    @app_commands.command(name="muet", description="Rendre muet un membre (timeout)")
     @app_commands.describe(membre="Membre à mute", minutes="Durée en minutes")
     @app_commands.checks.has_permissions(moderate_members=True)
     async def mute(self, interaction: discord.Interaction, membre: discord.Member, minutes: int = 10):
@@ -107,7 +107,7 @@ class Moderation(commands.Cog):
             f"🔇 **{membre}** est muet pour **{minutes} minute(s)**."
         )
 
-    @app_commands.command(name="clear", description="Supprimer des messages en masse")
+    @app_commands.command(name="nettoyer", description="Supprimer des messages en masse")
     @app_commands.describe(nombre="Nombre de messages à supprimer (max 100)")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def clear(self, interaction: discord.Interaction, nombre: int):

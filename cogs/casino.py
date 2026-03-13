@@ -7,7 +7,7 @@ from utils.database import get_data, update_db
 
 
 class Casino(commands.Cog):
-    """Jeux de casino : roulette, slots (extensible)."""
+    """Jeux de casino : roulette, machine à sous (extensible)."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -49,8 +49,8 @@ class Casino(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
 
-    # /slots
-    @app_commands.command(name="slots", description="Tenter ta chance à la machine à sous")
+    # /machine_a_sous
+    @app_commands.command(name="machine_a_sous", description="Tenter ta chance à la machine à sous")
     @app_commands.describe(mise="Somme à parier")
     async def slots(self, interaction: discord.Interaction, mise: int):
         user_id = interaction.user.id

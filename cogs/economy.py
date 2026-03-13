@@ -8,14 +8,14 @@ from utils.database import get_data, update_db, init_db, get_leaderboard
 
 
 class Economy(commands.Cog):
-    """Commandes d'économie : solde, daily, travail, dépôt, retrait, classement."""
+    """Commandes d'économie : solde, quotidien, travail, dépôt, retrait, classement."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         init_db()
 
-    # /bal
-    @app_commands.command(name="bal", description="Consulter ton solde")
+    # /solde
+    @app_commands.command(name="solde", description="Consulter ton solde")
     async def balance(self, interaction: discord.Interaction):
         wallet, bank, _ = get_data(interaction.user.id)
         embed = discord.Embed(
@@ -26,8 +26,8 @@ class Economy(commands.Cog):
         embed.add_field(name="Banque",        value=f"**{bank}** 🏦",  inline=True)
         await interaction.response.send_message(embed=embed)
 
-    # /daily
-    @app_commands.command(name="daily", description="Récupérer ton bonus quotidien")
+    # /quotidien
+    @app_commands.command(name="quotidien", description="Récupérer ton bonus quotidien")
     async def daily(self, interaction: discord.Interaction):
         user_id = interaction.user.id
         _, _, last_daily = get_data(user_id)
@@ -40,8 +40,8 @@ class Economy(commands.Cog):
         update_db(user_id, wallet_diff=reward, new_daily=today)
         await interaction.response.send_message(f"🎁 **{reward} 🪙** ajoutés à ton portefeuille !")
 
-    # /work
-    @app_commands.command(name="work", description="Travailler pour gagner de l'argent")
+    # /travail
+    @app_commands.command(name="travail", description="Travailler pour gagner de l'argent")
     async def work(self, interaction: discord.Interaction):
         gain = random.randint(70, 200)
         update_db(interaction.user.id, wallet_diff=gain)
@@ -50,8 +50,8 @@ class Economy(commands.Cog):
             f"💼 Job : **{random.choice(jobs)}** | Gain : **{gain} 🪙**"
         )
 
-    # /dep
-    @app_commands.command(name="dep", description="Déposer de l'argent en banque")
+    # /depot
+    @app_commands.command(name="depot", description="Déposer de l'argent en banque")
     @app_commands.describe(montant="Montant à déposer (ou 'all')")
     async def deposit(self, interaction: discord.Interaction, montant: str):
         user_id = interaction.user.id
@@ -64,8 +64,8 @@ class Economy(commands.Cog):
         update_db(user_id, wallet_diff=-amt, bank_diff=amt)
         await interaction.response.send_message(f"✅ **{amt} 🪙** déposés en banque.")
 
-    # /with
-    @app_commands.command(name="with", description="Retirer de l'argent de la banque")
+    # /retrait
+    @app_commands.command(name="retrait", description="Retirer de l'argent de la banque")
     @app_commands.describe(montant="Montant à retirer (ou 'all')")
     async def withdraw(self, interaction: discord.Interaction, montant: str):
         user_id = interaction.user.id
@@ -78,8 +78,8 @@ class Economy(commands.Cog):
         update_db(user_id, wallet_diff=amt, bank_diff=-amt)
         await interaction.response.send_message(f"✅ **{amt} 🪙** retirés.")
 
-    # /top
-    @app_commands.command(name="top", description="Classement des joueurs les plus riches")
+    # /classement
+    @app_commands.command(name="classement", description="Classement des joueurs les plus riches")
     async def leaderboard(self, interaction: discord.Interaction):
         rows = get_leaderboard(10)
         if not rows:

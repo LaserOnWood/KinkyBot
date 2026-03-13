@@ -106,6 +106,7 @@ async def work(interaction: discord.Interaction):
     await interaction.response.send_message(f"💼 Job : **{random.choice(jobs)}** | Gain : **{gain} 🪙**")
 
 @bot.tree.command(name="depot", description="Mettre de l'argent en banque")
+@app_commands.describe(montant="Montant à déposer (ou 'all')")
 async def deposit(interaction: discord.Interaction, montant: str):
     user_id = interaction.user.id
     wallet, _, _ = get_data(user_id)
@@ -118,13 +119,14 @@ async def deposit(interaction: discord.Interaction, montant: str):
     await interaction.response.send_message(f"✅ **{amt} 🪙** déposés en banque.")
 
 @bot.tree.command(name="retrait", description="Retirer de l'argent de la banque")
+@app_commands.describe(montant="Montant à retirer (ou 'all')")
 async def withdraw(interaction: discord.Interaction, montant: str):
     user_id = interaction.user.id
     _, bank, _ = get_data(user_id)
     
     amt = bank if montant.lower() == "all" else int(montant)
     if amt <= 0 or amt > bank:
-        return await interaction.Value("❌ Montant invalide.", ephemeral=True)
+        return await interaction.response.send_message("❌ Montant invalide.", ephemeral=True)
 
     update_db(user_id, wallet_diff=amt, bank_diff=-amt)
     await interaction.response.send_message(f"✅ **{amt} 🪙** retirés.")
