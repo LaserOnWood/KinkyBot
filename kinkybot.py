@@ -77,15 +77,15 @@ async def sync(ctx):
 
 # --- 5. COMMANDES D'ÉCONOMIE (SLASH) ---
 
-@bot.tree.command(name="bal", description="Consulter ton solde")
+@bot.tree.command(name="solde", description="Consulter ton solde")
 async def balance(interaction: discord.Interaction):
     wallet, bank, _ = get_data(interaction.user.id)
-    embed = discord.Embed(title=f"🏦 Compte en banque de {interaction.user.name}", color=0x3498db)
+    embed = discord.Embed(title=f"🏦 Compte en banque de {interaction.user.display_name}", color=0x3498db)
     embed.add_field(name="Portefeuille", value=f"**{wallet}** 🪙", inline=True)
     embed.add_field(name="Banque", value=f"**{bank}** 🏦", inline=True)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="daily", description="Récupérer ton bonus gratuit")
+@bot.tree.command(name="quotidien", description="Récupérer ton bonus gratuit")
 async def daily(interaction: discord.Interaction):
     user_id = interaction.user.id
     _, _, last_daily = get_data(user_id)
@@ -98,14 +98,14 @@ async def daily(interaction: discord.Interaction):
     update_db(user_id, wallet_diff=reward, new_daily=today)
     await interaction.response.send_message(f"🎁 **{reward} 🪙** ajoutés à ton portefeuille !")
 
-@bot.tree.command(name="work", description="Travailler pour gagner de l'argent")
+@bot.tree.command(name="travail", description="Travailler pour gagner de l'argent")
 async def work(interaction: discord.Interaction):
     gain = random.randint(70, 200)
     update_db(interaction.user.id, wallet_diff=gain)
     jobs = ["Mineur de Bitcoin", "Livreur Uber", "Modérateur Discord", "Mercenaire"]
     await interaction.response.send_message(f"💼 Job : **{random.choice(jobs)}** | Gain : **{gain} 🪙**")
 
-@bot.tree.command(name="dep", description="Mettre de l'argent en banque")
+@bot.tree.command(name="depot", description="Mettre de l'argent en banque")
 async def deposit(interaction: discord.Interaction, montant: str):
     user_id = interaction.user.id
     wallet, _, _ = get_data(user_id)
@@ -117,7 +117,7 @@ async def deposit(interaction: discord.Interaction, montant: str):
     update_db(user_id, wallet_diff=-amt, bank_diff=amt)
     await interaction.response.send_message(f"✅ **{amt} 🪙** déposés en banque.")
 
-@bot.tree.command(name="with", description="Retirer de l'argent de la banque")
+@bot.tree.command(name="retrait", description="Retirer de l'argent de la banque")
 async def withdraw(interaction: discord.Interaction, montant: str):
     user_id = interaction.user.id
     _, bank, _ = get_data(user_id)
@@ -171,4 +171,3 @@ async def on_ready():
     print(f"🚀 Bot en ligne : {bot.user.name}")
 
 bot.run(TOKEN)
-
