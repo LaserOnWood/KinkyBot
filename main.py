@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import os
+import sys  # Pour redémarrer le bot
 
 # --- 1. CHARGEMENT DU TOKEN ---
 def charger_token():
@@ -11,31 +12,32 @@ def charger_token():
     with open("token.txt", "r") as f:
         return f.read().strip()
 
-# --- 2. CLASSE PRINCIPALE DU BOT ---
+# --- 2. CONFIGURATION DES MODULES ---
+# Liste centrale de tes cogs pour la gestion automatique
+MODULES_LISTE = [
+    "cogs.general",
+    "cogs.economy",
+    "cogs.casino",
+    "cogs.reactions",
+    "cogs.moderation",
+    "cogs.gifs",
+    "cogs.accueil",
+    "cogs.fils_auto",
+]
+
 class KinkyBot(commands.Bot):
     def __init__(self):
         # Configuration des permissions (Intents)
         intents = discord.Intents.default()
-        intents.message_content = True  # Pour lire les commandes avec préfixe (!)
-        intents.members = True          # Pour gérer les pseudos et la modération
+        intents.message_content = True  # Pour lire les commandes !
+        intents.members = True          # Pour l'accueil et les pseudos
         
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        """Initialisation des modules (Cogs) avant la connexion."""
-        modules = [
-            "cogs.general",
-            "cogs.economy",
-            "cogs.casino",
-            "cogs.reactions",
-            "cogs.moderation",
-            "cogs.gifs",
-            "cogs.accueil",
-            "cogs.fils_auto",
-        ]
-        
+        """Initialisation des modules au démarrage."""
         print("--- Chargement des modules ---")
-        for extension in modules:
+        for extension in MODULES_LISTE:
             try:
                 await self.load_extension(extension)
                 print(f"✅ {extension} chargé")
@@ -52,7 +54,7 @@ class KinkyBot(commands.Bot):
 # --- 3. INITIALISATION ---
 bot = KinkyBot()
 
-# --- 4. COMMANDES D'ADMINISTRATION (PROPRIÉTAIRE UNIQUEMENT) ---
+# --- 4. COMMANDES D'ADMINISTRATION (OWNER UNIQUEMENT) ---
 
 @bot.command(name="synchro")
 @commands.is_owner()
@@ -61,52 +63,70 @@ async def synchro(ctx):
     attente = await ctx.send("🔄 Analyse et synchronisation des modules en cours...")
     
     try:
-        # Synchronisation globale avec les serveurs Discord
         commandes_synced = await bot.tree.sync()
-        
-        # Dictionnaire pour compter les commandes par catégorie (Cog)
         stats = {"Général": 0}
         
-        # Tri des commandes synchronisées pour le rapport
         for cmd in commandes_synced:
             trouve = False
             for nom_cog, objet_cog in bot.cogs.items():
-                # Récupère les noms des commandes slash rattachées à ce Cog
                 commandes_slash_cog = [c.name for c in objet_cog.get_app_commands()]
                 if cmd.name in commandes_slash_cog:
                     stats[nom_cog] = stats.get(nom_cog, 0) + 1
                     trouve = True
                     break
-            
             if not trouve:
                 stats["Général"] += 1
 
-        # Construction du rapport détaillé
         rapport = "**✅ Synchronisation terminée !**\n"
         for categorie, nombre in stats.items():
             if nombre > 0:
                 rapport += f"• `{categorie}` : {nombre} commande(s)\n"
         
         rapport += f"\n👉 Total : **{len(commandes_synced)}** commandes slash actives."
-        
         await attente.edit(content=rapport)
-        print(f"💾 Synchro réussie pour {ctx.author} ({len(commandes_synced)} commandes).")
 
     except Exception as e:
-        erreur_msg = f"❌ Erreur lors de la synchronisation : {e}"
-        await attente.edit(content=erreur_msg)
-        print(erreur_msg)
+        await attente.edit(content=f"❌ Erreur lors de la synchronisation : {e}")
 
 @bot.command(name="recharger")
 @commands.is_owner()
 async def recharger(ctx, module: str):
-    """Recharge un module spécifique (ex: !recharger economy)."""
-    try:
-        await bot.reload_extension(f"cogs.{module}")
-        await ctx.send(f"✅ Le module `{module}` a été mis à jour avec succès !")
-        print(f"♻️ Module rechargé : cogs.{module}")
-    except Exception as e:
-        await ctx.send(f"❌ Erreur lors du rechargement de `{module}` : \n```{e}```")
+    """Recharge un module précis ou 'tout'."""
+    if module.lower() == "tout":
+        erreurs = []
+        succes = 0
+        for m in MODULES_LISTE:
+            try:
+                await bot.reload_extension(m)
+                succes += 1
+            except Exception as e:
+                erreurs.append(f"{m}: {e}")
+        
+        msg = f"✅ **{succes}** modules rechargés."
+        if erreurs:
+            msg += f"\n❌ **{len(erreurs)}** erreurs rencontrées."
+        await ctx.send(msg)
+        
+    else:
+        try:
+            nom_complet = f"cogs.{module}" if not module.startswith("cogs.") else module
+            await bot.reload_extension(nom_complet)
+            await ctx.send(f"✅ Le module `{nom_complet}` a été mis à jour !")
+        except Exception as e:
+            await ctx.send(f"❌ Erreur sur `{module}` : \n```{e}```")
+
+@bot.command(name="relancer")
+@commands.is_owner()
+async def relancer(ctx):
+    """Redémarre complètement le processus du bot."""
+    await ctx.send("♻️ Redémarrage du bot en cours... Patientez.")
+    print("--- Redémarrage demandé ---")
+    
+    # Fermeture propre
+    await bot.close()
+    
+    # Relance le script python actuel
+    os.execv(sys.executable, ['python3'] + sys.argv)
 
 # --- 5. LANCEMENT ---
 if __name__ == "__main__":
