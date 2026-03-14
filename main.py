@@ -31,6 +31,7 @@ class KinkyBot(commands.Bot):
             "cogs.moderation",
             "cogs.gifs",
             "cogs.accueil",
+            "cogs.fils_auto",
         ]
         
         print("--- Chargement des modules ---")
