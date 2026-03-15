@@ -66,3 +66,41 @@ def get_leaderboard(limit: int = 10) -> list:
     res = cursor.fetchall()
     conn.close()
     return res
+
+
+
+
+def init_config_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    # Table pour les réglages simples (ex: id_salon_photo)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS config (
+        cle TEXT PRIMARY KEY,
+        valeur TEXT
+    )
+    """)
+    # Table pour les réactions (mot -> réponse)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS custom_reactions (
+        mot TEXT PRIMARY KEY,
+        reponse TEXT
+    )
+    """)
+    conn.commit()
+    conn.close()
+
+def set_config(cle, valeur):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR REPLACE INTO config (cle, valeur) VALUES (?, ?)", (cle, str(valeur)))
+    conn.commit()
+    conn.close()
+
+def get_config(cle, default=None):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT valeur FROM config WHERE cle = ?", (cle,))
+    res = cursor.fetchone()
+    conn.close()
+    return res[0] if res else default
