@@ -7,7 +7,15 @@ class GestionFils(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         # IDs des salons où cette fonctionnalité est active
-        self.SALONS_IMAGES = [123456789012345678] 
+        def get_salons_photo(self):
+            data = get_config("salons_photo", "")
+            if not data: return []
+            return [int(id_str) for id_str in data.split(",")]
+
+        @commands.Cog.listener()
+        async def on_message(self, message):
+            if message.channel.id not in self.get_salons_photo():
+                return
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
