@@ -1,23 +1,29 @@
 import discord
 from discord.ext import commands
+from utils.database import get_config
 
 class Accueil(commands.Cog):
     """Gestion de l'accueil des nouveaux membres."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # ID du salon où le message de bienvenue sera envoyé
-        # REMPLACE PAR TON ID DE SALON
-        self.ID_SALON_BIENVENUE = 123456789012345678 
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """S'active lorsqu'un membre rejoint le serveur."""
         
-        # On récupère le salon de bienvenue
-        channel = self.bot.get_channel(self.ID_SALON_BIENVENUE)
+        # On récupère le salon de bienvenue via la config
+        id_salon = get_config("salon_accueil")
+        if not id_salon:
+            return
+            
+        channel = self.bot.get_channel(int(id_salon))
         
         if channel:
+            # Récupération des autres salons configurés
+            id_presentation = get_config("salon_presentation", "ID_NON_CONFIGURE")
+            id_reglement = get_config("salon_reglement", "ID_NON_CONFIGURE")
+            
             # Création de l'Embed de bienvenue
             embed = discord.Embed(
                 title=f"👋 Bienvenue sur le serveur, {member.display_name} !",
@@ -29,12 +35,12 @@ class Accueil(commands.Cog):
             # Ajout des étapes
             embed.add_field(
                 name="1️⃣ Présentation",
-                value="Rends-toi dans le salon <#ID_SALON_PRESENTATION> et présente-toi en suivant le modèle épinglé.",
+                value=f"Rends-toi dans le salon <#{id_presentation}> et présente-toi en suivant le modèle épinglé.",
                 inline=False
             )
             embed.add_field(
                 name="2️⃣ Règlement",
-                value="Lis et valide le règlement dans le salon <#ID_SALON_REGLEMENT>.",
+                value=f"Lis et valide le règlement dans le salon <#{id_reglement}>.",
                 inline=False
             )
             embed.add_field(

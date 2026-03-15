@@ -2,26 +2,38 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import os
-import shutil
+import zipfile
 import datetime
 
 class ExportBDD(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db_path = "/app/data/economy.db"  # <--- METS LE NOM DE TON FICHIER ICI
+        # On utilise le chemin relatif pour plus de flexibilité
+        self.db_path = "data/economy.db"
 
-    @app_commands.command(name="export_bdd", description="Exporte et compresse la base de données (Propriétaire uniquement)")
+    @app_commands.command(name="export_bdd", description="Exporte et compresse la base de données (Propriétaire du bot uniquement)")
     async def export_bdd(self, interaction: discord.Interaction):
-        # 1. Vérification de sécurité : Seul le propriétaire du serveur peut l'utiliser
-        if interaction.user.id != interaction.guild.owner_id:
-            await interaction.response.send_message("❌ Seul le propriétaire du serveur peut utiliser cette commande.", ephemeral=True)
+        # 1. Vérification de sécurité : Seul le propriétaire du BOT peut l'utiliser (données sensibles)
+        is_owner = await self.bot.is_owner(interaction.user)
+        if not is_owner:
+            embed = discord.Embed(
+                title="❌ Accès refusé",
+                description="Seul le propriétaire du bot peut exporter la base de données.",
+                color=0xE74C3C
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         if not os.path.exists(self.db_path):
-            await interaction.response.send_message("❌ Fichier de base de données introuvable.", ephemeral=True)
+            embed = discord.Embed(
+                title="❌ Erreur",
+                description=f"Fichier de base de données introuvable à l'emplacement : `{self.db_path}`",
+                color=0xE74C3C
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        await interaction.response.defer(ephemeral=True) # On fait attendre Discord car le ZIP peut prendre du temps
+        await interaction.response.defer(ephemeral=True)
 
         try:
             file_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
@@ -30,8 +42,8 @@ class ExportBDD(commands.Cog):
             # 2. Logique de compression si trop gros ou par défaut pour la sécurité
             if file_size_mb > limit_mb:
                 zip_name = f"backup_db_{datetime.date.today()}.zip"
-                # Création du ZIP
-                with shutil.ZipFile(zip_name, 'w') as zipf:
+                # Création du ZIP avec zipfile (et non shutil)
+                with zipfile.ZipFile(zip_name, 'w') as zipf:
                     zipf.write(self.db_path, arcname=os.path.basename(self.db_path))
                 
                 file_to_send = discord.File(zip_name)

@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import random
 
-
 # --- Configuration des réponses automatiques ---
 # Clé : mot-clé (en minuscules) | Valeur : liste de réponses possibles
 TRIGGERS: dict[str, list[str]] = {
@@ -25,7 +24,6 @@ EMOJI_TRIGGERS: dict[str, str] = {
     "bite":       "🍆",
 }
 
-
 class Reactions(commands.Cog):
     """Réactions automatiques aux messages (texte + emoji)."""
 
@@ -47,8 +45,8 @@ class Reactions(commands.Cog):
                     description=random.choice(responses),
                     color=0x3498DB
                 )
-                # Optionnel: On peut ajouter le nom de l'utilisateur dans l'embed
-                embed.set_footer(text=f"Réponse pour {message.author.display_name}")
+                # Utilisation de display_name pour la cohérence
+                embed.set_footer(text=f"Réponse pour {message.author.display_name}", icon_url=message.author.display_avatar.url)
                 await message.channel.send(embed=embed)
                 break  # une seule réponse par message
 
@@ -59,7 +57,6 @@ class Reactions(commands.Cog):
                     await message.add_reaction(emoji)
                 except discord.HTTPException:
                     pass
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Reactions(bot))

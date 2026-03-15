@@ -5,7 +5,6 @@ import random
 
 from utils.database import get_data, update_db
 
-
 class Casino(commands.Cog):
     """Jeux de casino : roulette, machine à sous (extensible)."""
 
@@ -31,7 +30,7 @@ class Casino(commands.Cog):
         if mise <= 0 or mise > wallet:
             embed = discord.Embed(
                 title="❌ Erreur",
-                description="Mise invalide ou insuffisante.",
+                description=f"Mise invalide ou insuffisante. Tu as **{wallet} 💶**.",
                 color=0xE74C3C
             )
             return await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -43,10 +42,10 @@ class Casino(commands.Cog):
         if couleur == result_color:
             gain = mise * multiplicateur
             update_db(user_id, wallet_diff=gain - mise)
-            result_text = f"🎉 Bravo **{interaction.user.display_name}** ! Tu gagnes **{gain} 🪙** !"
+            result_text = f"🎉 Bravo **{interaction.user.display_name}** ! Tu gagnes **{gain} 💶** !"
         else:
             update_db(user_id, wallet_diff=-mise)
-            result_text = f"💀 Perdu **{interaction.user.display_name}**... Tu perds **{mise} 🪙**."
+            result_text = f"💀 Perdu **{interaction.user.display_name}**... Tu perds **{mise} 💶**."
 
         color_map = {"rouge": 0xE74C3C, "noir": 0x2C3E50, "vert": 0x2ECC71}
         embed = discord.Embed(title="🎰 Roulette", description=result_text, color=color_map[result_color])
@@ -54,6 +53,7 @@ class Casino(commands.Cog):
             name="Résultat",
             value=f"Le numéro **{tirage}** est tombé sur le **{result_color.upper()}**",
         )
+        embed.set_footer(text=f"Joueur : {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
         await interaction.response.send_message(embed=embed)
 
     # /machine_a_sous
@@ -66,7 +66,7 @@ class Casino(commands.Cog):
         if mise <= 0 or mise > wallet:
             embed = discord.Embed(
                 title="❌ Erreur",
-                description="Mise invalide ou insuffisante.",
+                description=f"Mise invalide ou insuffisante. Tu as **{wallet} 💶**.",
                 color=0xE74C3C
             )
             return await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -79,20 +79,20 @@ class Casino(commands.Cog):
             multi = 10 if rouleaux[0] == "💎" else 5
             gain = mise * multi
             update_db(user_id, wallet_diff=gain - mise)
-            result = f"🎉 JACKPOT **{interaction.user.display_name}** ! Tu gagnes **{gain} 🪙** (x{multi}) !"
+            result = f"🎉 JACKPOT **{interaction.user.display_name}** ! Tu gagnes **{gain} 💶** (x{multi}) !"
         elif rouleaux[0] == rouleaux[1] or rouleaux[1] == rouleaux[2]:
             gain = mise * 2
             update_db(user_id, wallet_diff=gain - mise)
-            result = f"✨ Deux identiques ! Bravo **{interaction.user.display_name}**, tu gagnes **{gain} 🪙** (x2) !"
+            result = f"✨ Deux identiques ! Bravo **{interaction.user.display_name}**, tu gagnes **{gain} 💶** (x2) !"
         else:
             update_db(user_id, wallet_diff=-mise)
-            result = f"💀 Rien... **{interaction.user.display_name}**, tu perds **{mise} 🪙**."
+            result = f"💀 Rien... **{interaction.user.display_name}**, tu perds **{mise} 💶**."
 
         embed = discord.Embed(title="🎰 Machine à sous", color=0x9B59B6)
         embed.add_field(name="Rouleaux", value=f"[ {affichage} ]", inline=False)
         embed.description = result
+        embed.set_footer(text=f"Joueur : {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
         await interaction.response.send_message(embed=embed)
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Casino(bot))

@@ -1,21 +1,18 @@
 import discord
 from discord.ext import commands
+from utils.database import get_config
 
 class GestionFils(commands.Cog):
     """Crée automatiquement des fils sous les images et nettoie le salon."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # IDs des salons où cette fonctionnalité est active
-        def get_salons_photo(self):
-            data = get_config("salons_photo", "")
-            if not data: return []
-            return [int(id_str) for id_str in data.split(",")]
 
-        @commands.Cog.listener()
-        async def on_message(self, message):
-            if message.channel.id not in self.get_salons_photo():
-                return
+    def get_salons_photo(self):
+        data = get_config("salons_photo", "")
+        if not data:
+            return []
+        return [int(id_str) for id_str in data.split(",")]
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -24,7 +21,8 @@ class GestionFils(commands.Cog):
             return
 
         # 2. On vérifie si le message est dans l'un des salons cibles
-        if message.channel.id not in self.SALONS_IMAGES:
+        salons_autorises = self.get_salons_photo()
+        if message.channel.id not in salons_autorises:
             return
 
         # --- EXCEPTION STAFF ---
@@ -44,11 +42,12 @@ class GestionFils(commands.Cog):
         if not membre_staff:
             try:
                 await message.delete()
-                await message.channel.send(
-                    f"⚠️ {message.author.mention}, ce salon est réservé aux images. "
-                    "Pour discuter, utilise le **fil de discussion** sous une photo !",
-                    delete_after=10
+                embed = discord.Embed(
+                    title="⚠️ Salon réservé aux images",
+                    description=f"{message.author.mention}, ce salon est réservé aux images.\nPour discuter, utilise le **fil de discussion** sous une photo !",
+                    color=0xE74C3C
                 )
+                await message.channel.send(embed=embed, delete_after=10)
             except Exception as e:
                 print(f"❌ Erreur lors de la suppression : {e}")
         else:

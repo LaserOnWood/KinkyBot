@@ -1,8 +1,18 @@
 import sqlite3
+import os
 
-DB_PATH = "/app/data/economy.db"
+# Utilisation d'un chemin relatif pour plus de flexibilité (Docker/Local)
+DB_DIR = "data"
+DB_PATH = os.path.join(DB_DIR, "economy.db")
+
+def ensure_db_dir():
+    """S'assure que le dossier de la base de données existe."""
+    if not os.path.exists(DB_DIR):
+        os.makedirs(DB_DIR)
+        print(f"📁 Dossier '{DB_DIR}' créé.")
 
 def init_db():
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -19,6 +29,7 @@ def init_db():
 
 def get_data(user_id: int) -> tuple:
     """Retourne (wallet, bank, last_daily). Crée le joueur s'il n'existe pas."""
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT wallet, bank, last_daily FROM economy WHERE user_id = ?", (user_id,))
@@ -32,6 +43,7 @@ def get_data(user_id: int) -> tuple:
 
 def update_db(user_id: int, wallet_diff: int = 0, bank_diff: int = 0, new_daily: str = None):
     """Met à jour le portefeuille / la banque / la date daily."""
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     if new_daily:
@@ -49,6 +61,7 @@ def update_db(user_id: int, wallet_diff: int = 0, bank_diff: int = 0, new_daily:
 
 def set_wallet(user_id: int, amount: int):
     """Définit directement le montant du portefeuille."""
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("UPDATE economy SET wallet = ? WHERE user_id = ?", (amount, user_id))
@@ -57,6 +70,7 @@ def set_wallet(user_id: int, amount: int):
 
 def get_leaderboard(limit: int = 10) -> list:
     """Retourne les `limit` joueurs les plus riches (wallet + bank)."""
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
@@ -67,10 +81,8 @@ def get_leaderboard(limit: int = 10) -> list:
     conn.close()
     return res
 
-
-
-
 def init_config_db():
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     # Table pour les réglages simples (ex: id_salon_photo)
@@ -91,6 +103,7 @@ def init_config_db():
     conn.close()
 
 def set_config(cle, valeur):
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("INSERT OR REPLACE INTO config (cle, valeur) VALUES (?, ?)", (cle, str(valeur)))
@@ -98,6 +111,7 @@ def set_config(cle, valeur):
     conn.close()
 
 def get_config(cle, default=None):
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT valeur FROM config WHERE cle = ?", (cle,))
