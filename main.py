@@ -5,12 +5,20 @@ import sys  # Pour redémarrer le bot
 
 # --- 1. CHARGEMENT DU TOKEN ---
 def charger_token():
-    """Lit le token depuis le fichier token.txt à la racine."""
-    if not os.path.exists("token.txt"):
-        print("❌ Erreur : Le fichier 'token.txt' est introuvable.")
-        exit()
-    with open("token.txt", "r") as f:
-        return f.read().strip()
+    """Récupère le token via variable d'environnement ou fichier local."""
+    # 1. Tentative via variable d'environnement (Méthode Railway / Docker)
+    if token := os.environ.get("DISCORD_TOKEN"):
+        return token
+
+    # 2. Tentative via fichier local (Méthode PC / Développement)
+    if os.path.exists("token.txt"):
+        with open("token.txt", "r") as f:
+            return f.read().strip()
+
+    # 3. Si rien n'est trouvé
+    print("❌ Erreur : Aucun token trouvé dans l'environnement (DISCORD_TOKEN) ou dans token.txt")
+    exit()
+
 
 # --- 2. CONFIGURATION DES MODULES ---
 # Liste centrale de tes cogs pour la gestion automatique
@@ -23,6 +31,7 @@ MODULES_LISTE = [
     "cogs.gifs",
     "cogs.accueil",
     "cogs.fils_auto",
+    "cogs.playparty",
 ]
 
 class KinkyBot(commands.Bot):
