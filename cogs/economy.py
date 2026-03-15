@@ -22,7 +22,7 @@ class Economy(commands.Cog):
             title=f"🏦 Compte de {interaction.user.display_name}",
             color=0x3498DB,
         )
-        embed.add_field(name="Portefeuille", value=f"**{wallet}** 🪙", inline=True)
+        embed.add_field(name="Portefeuille", value=f"**{wallet}** 💶", inline=True)
         embed.add_field(name="Banque",        value=f"**{bank}** 🏦",  inline=True)
         await interaction.response.send_message(embed=embed)
 
@@ -45,7 +45,7 @@ class Economy(commands.Cog):
         update_db(user_id, wallet_diff=reward, new_daily=today)
         embed = discord.Embed(
             title="🎁 Bonus Quotidien",
-            description=f"**{interaction.user.display_name}**, tu as reçu **{reward} 🪙** !",
+            description=f"**{interaction.user.display_name}**, tu as reçu **{reward} 💶** !",
             color=0x2ECC71
         )
         await interaction.response.send_message(embed=embed)
@@ -58,7 +58,7 @@ class Economy(commands.Cog):
         jobs = ["Mineur de Bitcoin", "Livreur Uber", "Modérateur Discord", "Mercenaire", "Streamer Twitch"]
         embed = discord.Embed(
             title="💼 Travail terminé",
-            description=f"**{interaction.user.display_name}**, tu as travaillé comme **{random.choice(jobs)}** et gagné **{gain} 🪙** !",
+            description=f"**{interaction.user.display_name}**, tu as travaillé comme **{random.choice(jobs)}** et gagné **{gain} 💶** !",
             color=0x3498DB
         )
         await interaction.response.send_message(embed=embed)
@@ -83,7 +83,7 @@ class Economy(commands.Cog):
         update_db(user_id, wallet_diff=-amt, bank_diff=amt)
         embed = discord.Embed(
             title="✅ Dépôt réussi",
-            description=f"**{interaction.user.display_name}**, tu as déposé **{amt} 🪙** en banque.",
+            description=f"**{interaction.user.display_name}**, tu as déposé **{amt} 💶** en banque.",
             color=0x2ECC71
         )
         await interaction.response.send_message(embed=embed)
@@ -108,7 +108,7 @@ class Economy(commands.Cog):
         update_db(user_id, wallet_diff=amt, bank_diff=-amt)
         embed = discord.Embed(
             title="✅ Retrait réussi",
-            description=f"**{interaction.user.display_name}**, tu as retiré **{amt} 🪙** de ta banque.",
+            description=f"**{interaction.user.display_name}**, tu as retiré **{amt} 💶** de ta banque.",
             color=0x2ECC71
         )
         await interaction.response.send_message(embed=embed)
@@ -126,7 +126,7 @@ class Economy(commands.Cog):
         for i, (user_id, total) in enumerate(rows, start=1):
             user = self.bot.get_user(user_id)
             user_name = user.display_name if isinstance(user, discord.User) or isinstance(user, discord.Member) else f"ID:{user_id}"
-            lines.append(f"**{i}.** {user_name} — {total} 🪙")
+            lines.append(f"**{i}.** {user_name} — {total} 💶")
         embed.description = "\n".join(lines)
         await interaction.response.send_message(embed=embed)
 
