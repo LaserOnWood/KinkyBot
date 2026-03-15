@@ -32,6 +32,7 @@ MODULES_LISTE = [
     "cogs.accueil",
     "cogs.fils_auto",
     "cogs.playparty",
+    "cogs.config",
 ]
 
 class KinkyBot(commands.Bot):
