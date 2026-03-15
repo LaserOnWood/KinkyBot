@@ -33,6 +33,7 @@ MODULES_LISTE = [
     "cogs.fils_auto",
     "cogs.playparty",
     "cogs.config",
+    "cogs.exportBDD",
 ]
 
 class KinkyBot(commands.Bot):
