@@ -8,7 +8,7 @@ import datetime
 class ExportBDD(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db_path = "ma_base_de_donnees.sqlite"  # <--- METS LE NOM DE TON FICHIER ICI
+        self.db_path = "/app/data/economy.db"  # <--- METS LE NOM DE TON FICHIER ICI
 
     @app_commands.command(name="export_bdd", description="Exporte et compresse la base de données (Propriétaire uniquement)")
     async def export_bdd(self, interaction: discord.Interaction):
