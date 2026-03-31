@@ -24,7 +24,7 @@ OPENAI_API_KEY  = charger_cle("OPENAI_API_KEY",  "openai_key.txt")
 MISTRAL_API_KEY = charger_cle("MISTRAL_API_KEY", "mistral_key.txt")
 
 # URLs des APIs
-GEMINI_URL  = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_URL  = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 OPENAI_URL  = "https://api.openai.com/v1/chat/completions"
 MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions"
 
