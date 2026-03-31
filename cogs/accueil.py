@@ -48,6 +48,11 @@ class Accueil(commands.Cog):
                 value="Patiente un court instant, un membre du staff viendra valider ton profil pour t'ouvrir les accès.",
                 inline=False
             )
+            embed.add_field(
+                name="4️⃣ Promotion",
+                value="Fais nous savoir si nous nous sommes déjà rencontré afin d'obtenir le rôle adéquat",
+                inline=False
+            )
 
             # Image ou icône facultative
             embed.set_thumbnail(url=member.display_avatar.url)
