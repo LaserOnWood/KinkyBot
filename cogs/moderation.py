@@ -134,6 +134,71 @@ class Moderation(commands.Cog):
         )
         await interaction.followup.send(embed=embed, ephemeral=True)
 
+    @app_commands.command(name="deplacer", description="Déplacer des messages vers un autre salon")
+    @app_commands.describe(salon="Le salon de destination", nombre="Nombre de messages à déplacer (max 100)")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    async def move_messages(self, interaction: discord.Interaction, salon: discord.TextChannel, nombre: int):
+        if nombre < 1 or nombre > 100:
+            embed = discord.Embed(title="❌ Erreur", description="Entre 1 et 100 messages.", color=0xE74C3C)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+        await interaction.response.defer(ephemeral=True)
+        
+        messages = [msg async for msg in interaction.channel.history(limit=nombre)]
+        if not messages:
+            embed = discord.Embed(title="❌ Erreur", description="Aucun message trouvé à déplacer.", color=0xE74C3C)
+            return await interaction.followup.send(embed=embed, ephemeral=True)
+            
+        messages.reverse()
+        
+        webhooks = await salon.webhooks()
+        webhook = discord.utils.get(webhooks, name="KinkyBot Move")
+        if not webhook:
+            try:
+                webhook = await salon.create_webhook(name="KinkyBot Move")
+            except discord.Forbidden:
+                embed = discord.Embed(title="❌ Erreur", description="Permissions insuffisantes pour créer un webhook dans le salon cible.", color=0xE74C3C)
+                return await interaction.followup.send(embed=embed, ephemeral=True)
+                
+        for msg in messages:
+            files = []
+            for att in msg.attachments:
+                try:
+                    files.append(await att.to_file())
+                except Exception:
+                    pass
+            
+            content = msg.content
+            if not content and not files and not msg.embeds:
+                content = "*[Contenu non supporté]*"
+                
+            try:
+                await webhook.send(
+                    content=content,
+                    username=msg.author.display_name,
+                    avatar_url=msg.author.display_avatar.url if msg.author.display_avatar else None,
+                    files=files,
+                    embeds=msg.embeds
+                )
+            except discord.HTTPException:
+                pass
+                
+        try:
+            await interaction.channel.delete_messages(messages)
+        except discord.HTTPException:
+            for msg in messages:
+                try:
+                    await msg.delete()
+                except discord.HTTPException:
+                    pass
+                    
+        embed_success = discord.Embed(
+            title="➡️ Déplacement",
+            description=f"**{len(messages)}** messages déplacés vers {salon.mention}.",
+            color=0x2ECC71
+        )
+        await interaction.followup.send(embed_success, ephemeral=True)
+
     # ------------------------------------------------------------------ #
     #  GESTION DES ERREURS DE PERMISSIONS
     # ------------------------------------------------------------------ #
@@ -143,6 +208,7 @@ class Moderation(commands.Cog):
     @unban.error
     @mute.error
     @clear.error
+    @move_messages.error
     async def permission_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.MissingPermissions):
             embed = discord.Embed(title="❌ Erreur", description="Tu n'as pas les permissions nécessaires.", color=0xE74C3C)
