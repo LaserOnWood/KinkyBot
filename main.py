@@ -25,6 +25,8 @@ def charger_token():
 MODULES_LISTE = [
     "cogs.general",
     "cogs.economy",
+    "cogs.nsfw",
+    "cogs.niveaux",
     "cogs.casino",
     "cogs.reactions",
     "cogs.moderation",
