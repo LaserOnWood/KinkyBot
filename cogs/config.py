@@ -66,15 +66,15 @@ class ReactionConfigView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Ajouter / Modifier", style=discord.ButtonStyle.success, emoji="➕")
+    @discord.ui.button(label="Ajouter / Modifier", style=discord.ButtonStyle.success, emoji="➕", custom_id="kinkybot:config:reaction:add")
     async def add_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(AddReactionModal())
 
-    @discord.ui.button(label="Supprimer", style=discord.ButtonStyle.danger, emoji="🗑️")
+    @discord.ui.button(label="Supprimer", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="kinkybot:config:reaction:delete")
     async def del_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(DeleteReactionModal())
 
-    @discord.ui.button(label="Voir la liste", style=discord.ButtonStyle.secondary, emoji="📋")
+    @discord.ui.button(label="Voir la liste", style=discord.ButtonStyle.secondary, emoji="📋", custom_id="kinkybot:config:reaction:list")
     async def list_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         reactions = get_all_reactions()
         if not reactions:
@@ -95,6 +95,7 @@ class ConfigMainView(discord.ui.View):
 
     @discord.ui.select(
         placeholder="Que souhaitez-vous configurer ?",
+        custom_id="kinkybot:config:main:select",
         options=[
             discord.SelectOption(label="Salons Photo", value="photos", emoji="📸", description="Gérer les fils automatiques"),
             discord.SelectOption(label="Accueil", value="accueil", emoji="👋", description="Changer le salon de bienvenue"),
