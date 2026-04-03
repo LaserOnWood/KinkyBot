@@ -36,8 +36,6 @@ def _connect():
 
 # ═══════════════════════════════════════════════════════════════════
 #  INITIALISATION GLOBALE
-#  Appelle init_db() au démarrage du bot (depuis main.py ou setup_hook).
-#  Chaque module y enregistre ses tables via _MODULES.
 # ═══════════════════════════════════════════════════════════════════
 
 def init_db():
@@ -224,15 +222,26 @@ def get_all_reactions() -> dict[str, str]:
 
 
 # ═══════════════════════════════════════════════════════════════════
+#  MODULE : NIVEAUX (XP)
+# ═══════════════════════════════════════════════════════════════════
+
+def _init_levels(conn: sqlite3.Connection):
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS levels (
+            user_id    INTEGER PRIMARY KEY,
+            xp         INTEGER NOT NULL DEFAULT 0,
+            level      INTEGER NOT NULL DEFAULT 0,
+            last_msg   REAL    NOT NULL DEFAULT 0
+        )
+    """)
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  REGISTRE DES MODULES
-#  Pour ajouter un nouveau module :
-#    1. Crée ta fonction  _init_monmodule(conn)  ci-dessus
-#    2. Ajoute une entrée dans ce dict
 # ═══════════════════════════════════════════════════════════════════
 
 _MODULES: dict[str, callable] = {
     "economy":  _init_economy,
     "config":   _init_config,
-    # "casino":  _init_casino,   ← exemple d'ajout futur
-    # "xp":      _init_xp,
+    "levels":   _init_levels,
 }

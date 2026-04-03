@@ -1,27 +1,24 @@
 import discord
 from discord.ext import commands
 import os
-import sys  # Pour redémarrer le bot
+import sys
+from utils.database import init_db
 
 # --- 1. CHARGEMENT DU TOKEN ---
 def charger_token():
     """Récupère le token via variable d'environnement ou fichier local."""
-    # 1. Tentative via variable d'environnement (Méthode Railway / Docker)
     if token := os.environ.get("DISCORD_TOKEN"):
         return token
 
-    # 2. Tentative via fichier local (Méthode PC / Développement)
     if os.path.exists("token.txt"):
         with open("token.txt", "r") as f:
             return f.read().strip()
 
-    # 3. Si rien n'est trouvé
     print("❌ Erreur : Aucun token trouvé dans l'environnement (DISCORD_TOKEN) ou dans token.txt")
     exit()
 
 
 # --- 2. CONFIGURATION DES MODULES ---
-# Liste centrale de tes cogs pour la gestion automatique
 MODULES_LISTE = [
     "cogs.general",
     "cogs.economy",
@@ -40,15 +37,17 @@ MODULES_LISTE = [
 
 class KinkyBot(commands.Bot):
     def __init__(self):
-        # Configuration des permissions (Intents)
         intents = discord.Intents.default()
-        intents.message_content = True  # Pour lire les commandes !
-        intents.members = True          # Pour l'accueil et les pseudos
+        intents.message_content = True
+        intents.members = True
         
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        """Initialisation des modules au démarrage."""
+        """Initialisation des modules et de la base de données."""
+        # Initialisation de la BDD
+        init_db()
+        
         print("--- Chargement des modules ---")
         for extension in MODULES_LISTE:
             try:
@@ -57,6 +56,11 @@ class KinkyBot(commands.Bot):
             except Exception as e:
                 print(f"❌ Erreur sur {extension} : {e}")
         print("------------------------------")
+        
+        # Enregistrement des Persistent Views
+        from cogs.config import ConfigMainView, ReactionConfigView
+        self.add_view(ConfigMainView())
+        self.add_view(ReactionConfigView())
 
     async def on_ready(self):
         """Confirmation de la mise en ligne."""
@@ -72,32 +76,11 @@ bot = KinkyBot()
 @bot.command(name="synchro")
 @commands.is_owner()
 async def synchro(ctx):
-    """Synchronise les commandes slash et affiche le détail par module."""
+    """Synchronise les commandes slash."""
     attente = await ctx.send("🔄 Analyse et synchronisation des modules en cours...")
-    
     try:
         commandes_synced = await bot.tree.sync()
-        stats = {"Général": 0}
-        
-        for cmd in commandes_synced:
-            trouve = False
-            for nom_cog, objet_cog in bot.cogs.items():
-                commandes_slash_cog = [c.name for c in objet_cog.get_app_commands()]
-                if cmd.name in commandes_slash_cog:
-                    stats[nom_cog] = stats.get(nom_cog, 0) + 1
-                    trouve = True
-                    break
-            if not trouve:
-                stats["Général"] += 1
-
-        rapport = "**✅ Synchronisation terminée !**\n"
-        for categorie, nombre in stats.items():
-            if nombre > 0:
-                rapport += f"• `{categorie}` : {nombre} commande(s)\n"
-        
-        rapport += f"\n👉 Total : **{len(commandes_synced)}** commandes slash actives."
-        await attente.edit(content=rapport)
-
+        await attente.edit(content=f"✅ Synchronisation terminée ! **{len(commandes_synced)}** commandes slash actives.")
     except Exception as e:
         await attente.edit(content=f"❌ Erreur lors de la synchronisation : {e}")
 
@@ -119,7 +102,6 @@ async def recharger(ctx, module: str):
         if erreurs:
             msg += f"\n❌ **{len(erreurs)}** erreurs rencontrées."
         await ctx.send(msg)
-        
     else:
         try:
             nom_complet = f"cogs.{module}" if not module.startswith("cogs.") else module
@@ -133,12 +115,7 @@ async def recharger(ctx, module: str):
 async def relancer(ctx):
     """Redémarre complètement le processus du bot."""
     await ctx.send("♻️ Redémarrage du bot en cours... Patientez.")
-    print("--- Redémarrage demandé ---")
-    
-    # Fermeture propre
     await bot.close()
-    
-    # Relance le script python actuel
     os.execv(sys.executable, ['python3'] + sys.argv)
 
 # --- 5. LANCEMENT ---

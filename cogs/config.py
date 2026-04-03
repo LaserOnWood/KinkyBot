@@ -18,9 +18,13 @@ class ConfigPanel(commands.Cog):
         
         salon_photo_actuel = get_config("salons_photo", "Aucun")
         salon_accueil_actuel = get_config("salon_accueil", "Aucun")
+        salon_pres_actuel = get_config("salon_presentation", "Aucun")
+        salon_regle_actuel = get_config("salon_reglement", "Aucun")
         
-        embed.add_field(name="📸 Salons Photo", value=f"ID(s) : {salon_photo_actuel}", inline=False)
-        embed.add_field(name="👋 Salon Accueil", value=f"ID : {salon_accueil_actuel}", inline=False)
+        embed.add_field(name="📸 Salons Photo", value=f"ID(s) : {salon_photo_actuel}", inline=True)
+        embed.add_field(name="👋 Salon Accueil", value=f"ID : {salon_accueil_actuel}", inline=True)
+        embed.add_field(name="📝 Salon Présentation", value=f"ID : {salon_pres_actuel}", inline=True)
+        embed.add_field(name="📜 Salon Règlement", value=f"ID : {salon_regle_actuel}", inline=True)
 
         view = ConfigMainView()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
@@ -92,13 +96,17 @@ class ConfigMainView(discord.ui.View):
     @discord.ui.select(
         placeholder="Que souhaitez-vous configurer ?",
         options=[
-            discord.SelectOption(label="Salons Photo", value="photos", emoji="📸", description="Gérer les fils automatiques (jusqu'à 3)"),
+            discord.SelectOption(label="Salons Photo", value="photos", emoji="📸", description="Gérer les fils automatiques"),
             discord.SelectOption(label="Accueil", value="accueil", emoji="👋", description="Changer le salon de bienvenue"),
+            discord.SelectOption(label="Présentation", value="presentation", emoji="📝", description="Changer le salon de présentation"),
+            discord.SelectOption(label="Règlement", value="reglement", emoji="📜", description="Changer le salon du règlement"),
             discord.SelectOption(label="Réactions", value="reactions", emoji="💬", description="Ajouter/Supprimer des réactions")
         ]
     )
     async def select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
-        if select.values[0] == "photos":
+        val = select.values[0]
+        
+        if val == "photos":
             channel_select = discord.ui.ChannelSelect(
                 placeholder="Sélectionnez les salons photo...",
                 channel_types=[discord.ChannelType.text],
@@ -115,13 +123,15 @@ class ConfigMainView(discord.ui.View):
             channel_select.callback = channel_callback
             new_view = discord.ui.View()
             new_view.add_item(channel_select)
-            
             embed = discord.Embed(title="📸 Configuration - Salons Photo", description="Sélectionnez les salons dans le menu ci-dessous.", color=discord.Color.green())
             await interaction.response.edit_message(embed=embed, view=new_view)
 
-        elif select.values[0] == "accueil":
+        elif val in ["accueil", "presentation", "reglement"]:
+            cle_config = f"salon_{val}"
+            label = val.capitalize()
+            
             channel_select = discord.ui.ChannelSelect(
-                placeholder="Sélectionnez le salon d'accueil...",
+                placeholder=f"Sélectionnez le salon de {val}...",
                 channel_types=[discord.ChannelType.text],
                 min_values=1,
                 max_values=1
@@ -129,17 +139,16 @@ class ConfigMainView(discord.ui.View):
 
             async def channel_callback(inter: discord.Interaction):
                 c_id = str(channel_select.values[0].id)
-                set_config("salon_accueil", c_id)
-                await inter.response.send_message(f"✅ Salon d'accueil mis à jour : {channel_select.values[0].mention}", ephemeral=True)
+                set_config(cle_config, c_id)
+                await inter.response.send_message(f"✅ Salon de **{label}** mis à jour : {channel_select.values[0].mention}", ephemeral=True)
 
             channel_select.callback = channel_callback
             new_view = discord.ui.View()
             new_view.add_item(channel_select)
-            
-            embed = discord.Embed(title="👋 Configuration - Salon Accueil", description="Sélectionnez le salon d'accueil dans le menu ci-dessous.", color=discord.Color.green())
+            embed = discord.Embed(title=f"⚙️ Configuration - Salon {label}", description=f"Sélectionnez le salon de {val} dans le menu ci-dessous.", color=discord.Color.green())
             await interaction.response.edit_message(embed=embed, view=new_view)
 
-        elif select.values[0] == "reactions":
+        elif val == "reactions":
             view = ReactionConfigView()
             embed = discord.Embed(title="💬 Configuration - Réactions Personnalisées", description="Utilisez les boutons ci-dessous pour gérer les réponses automatiques du bot.", color=discord.Color.green())
             await interaction.response.edit_message(embed=embed, view=view)
